@@ -42,14 +42,17 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        log.info("TaroEmotionsBot[onUpdateReceived] initiated");
         if (update.hasMessage() && update.getMessage().hasText()) {
             handleText(update.getMessage());
         } else if (update.hasCallbackQuery()) {
             handleCallback(update.getCallbackQuery());
         }
+        log.info("TaroEmotionsBot[onUpdateReceived] finished");
     }
 
     private void handleText(Message message) {
+        log.info("TaroEmotionsBot[handleText] initiated");
         long chatId = message.getChatId();
         String userInput = message.getText();
         UserState state = userStates.getOrDefault(chatId, UserState.IDLE);
@@ -82,9 +85,11 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
             }
             default -> sendMessage(chatId, "😕 Я пока не понимаю твой запрос. Используй кнопки.");
         }
+        log.info("TaroEmotionsBot[handleText] finished");
     }
 
     private void sendCategories(long chatId) {
+        log.info("TaroEmotionsBot[sendCategories] initiated");
         sendMessageWithButtons(chatId, "Какой вопрос тебя волнует?",
                 List.of(
                         List.of(button("💖 Любовь и отношения", "category_love")),
@@ -93,9 +98,11 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                         List.of(button("🌟 Личностный рост", "category_growth")),
                         List.of(button("🔮 Жизненный путь", "category_life"))
                 ));
+        log.info("TaroEmotionsBot[sendCategories] finished");
     }
 
     private void handleCallback(CallbackQuery callbackQuery) {
+        log.info("TaroEmotionsBot[handleCallback] initiated");
         long chatId = callbackQuery.getMessage().getChatId();
         String data = callbackQuery.getData();
 
@@ -142,31 +149,39 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
             }
             case "end" -> sendWelcome(chatId);
         }
+        log.info("TaroEmotionsBot[handleCallback] finished");
     }
 
     private void sendWelcome(long chatId) {
+        log.info("TaroEmotionsBot[sendWelcome] initiated");
         sendMessageWithButtons(chatId, "✨ Привет! Я твой личный таро-проводник.\nДавай посмотрим, что говорят карты?",
                 List.of(
                         List.of(button("🃏 Сделать расклад", "start_tarot")),
                         List.of(button("❓ Как это работает?", "how_it_works"))
                 ));
+        log.info("TaroEmotionsBot[sendWelcome] finished");
     }
 
     private void sendHowItWorks(long chatId) {
+        log.info("TaroEmotionsBot[sendHowItWorks] initiated");
         sendMessageWithButtons(chatId, "Ты выбираешь тему гадания, я вытягиваю карты и даю тебе их интерпретацию.\nГотов попробовать?",
                 List.of(List.of(button("🃏 Сделать расклад", "start_tarot"))));
+        log.info("TaroEmotionsBot[sendHowItWorks] finished");
     }
 
     private void sendTarotResult(long chatId, String result) {
+        log.info("TaroEmotionsBot[sendTarotResult] initiated");
         sendMessageWithButtons(chatId, result,
                 List.of(
                         List.of(button("🔄 Сделать ещё один расклад", "again")),
                         List.of(button("🧘 Задать уточняющий вопрос", "clarifying_question")),
                         List.of(button("❌ Завершить", "end"))
                 ));
+        log.info("TaroEmotionsBot[sendTarotResult] finished");
     }
 
     private void sendMessageWithButtons(long chatId, String text, List<List<InlineKeyboardButton>> buttons) {
+        log.info("TaroEmotionsBot[sendMessageWithButtons] initiated");
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
@@ -176,6 +191,7 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
         message.setReplyMarkup(markup);
 
         sendMessage(message);
+        log.info("TaroEmotionsBot[sendMessageWithButtons] finished");
     }
 
     private InlineKeyboardButton button(String text, String data) {
@@ -186,17 +202,21 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
     }
 
     private void sendMessage(long chatId, String text) {
+        log.info("TaroEmotionsBot[sendMessage] initiated");
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
         sendMessage(message);
+        log.info("TaroEmotionsBot[sendMessage] finished");
     }
 
     private void sendMessage(SendMessage message) {
+        log.info("TaroEmotionsBot[sendMessage] initiated");
         try {
             execute(message);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
+        log.info("TaroEmotionsBot[sendMessage] finished");
     }
 }
