@@ -1,0 +1,16 @@
+open-ai:
+  bearer-key: ${OPEN_API_TOKEN}
+  token: ${OPEN_API_TOKEN}
+  chat-gpt-url: https://api.openai.com/v1/chat/completions
+  dalle-create-image-url: https://api.openai.com/v1/images/generations
+  base-url: https://api.openai.com/v1/
+  chat-gpt:
+    chat-url: /chat/completions
+    threads: /threads
+  dalle:
+    create-image-url: /images/generations
+
+telegram:
+  bot:
+    username: TaroEmotionsBot
+    token: 7803345293:AAE6u8MKhARoYH3aV4SfNZnzpKLmL3NvxrA
