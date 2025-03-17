@@ -3,20 +3,20 @@ options:
 
 steps:
   # 1. Собираем и пушим Docker-образ с помощью Jib
-  - name: maven:3.9.6-amazoncorretto-21
+  - name: 'maven:3.9.6-amazoncorretto-21'
     entrypoint: mvn
     args: [
-      'compile', 'jib:build',
-      '-Djib.to.image=gcr.io/$PROJECT_ID/tarobot:$COMMIT_SHA',
+      'clean', 'compile', 'jib:build',
+      '-Djib.to.image=gcr.io/$PROJECT_ID/tarobot-backend:latest',
       '-f', 'pom.xml'
     ]
 
-  # 2. Деплой в Cloud Run без хардкода токена
+  # 2. Деплой в Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [
-      'run', 'deploy', 'tarobot',
+      'run', 'deploy', 'tarobot-backend',
       '--project', '$PROJECT_ID',
-      '--image', 'gcr.io/$PROJECT_ID/tarobot:$COMMIT_SHA',
+      '--image', 'gcr.io/$PROJECT_ID/tarobot-backend:latest',
       '--platform', 'managed',
       '--region', 'europe-north1',
       '--allow-unauthenticated'
