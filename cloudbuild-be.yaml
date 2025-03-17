@@ -8,7 +8,7 @@ steps:
     args: [
       'compile', 'jib:build',
       '-Djib.to.image=gcr.io/$PROJECT_ID/tarobot:$COMMIT_SHA',
-      '-f', 'backend/pom.xml'
+      '-f', 'pom.xml'
     ]
 
   # 2. Деплой в Cloud Run без хардкода токена
