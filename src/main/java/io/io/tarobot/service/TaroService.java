@@ -19,21 +19,21 @@ public class TaroService {
      * Генерирует расклад Таро по запросу пользователя.
      */
     public String makeTarotPrediction(String userMessage) {
-        log.info("TaroService[makeTarotPrediction] initiated");
+        log.info("makeTarotPrediction[TaroService] initiated");
         // Загружаем system-промт и подставляем стиль блогера
         String systemMessage = promptLoader.loadPrompt("tarot_system.txt");
 
         // Загружаем user-промт и подставляем вопрос пользователя
         String userPrompt = String.format(promptLoader.loadPrompt("tarot_user.txt"), userMessage);
 
-        log.info("TaroService[makeTarotPrediction] prompts are loaded");
+        log.info("makeTarotPrediction[TaroService] prompts are loaded");
 
         String response = chatGPTClient.callChat(ChatGPTRequest.createRequest(systemMessage, userPrompt))
                 .getChoices().get(0)
                 .getMessage()
                 .getContent();
 
-        log.info("TaroService[makeTarotPrediction] chat gpt response received");
+        log.info("makeTarotPrediction[TaroService] chat gpt response received");
         return response;
     }
 
@@ -41,18 +41,18 @@ public class TaroService {
      * Генерирует уточняющий вопрос по запросу пользователя.
      */
     public String makeClarifyingQuestion(String userMessage) {
-        log.info("TaroService[makeClarifyingQuestion] initiated");
+        log.info("makeClarifyingQuestion[TaroService] initiated");
         String systemMessage = promptLoader.loadPrompt("clarifying_system.txt");
         String userPrompt = String.format("Помоги человеку уточнить его вопрос: \"%s\".", userMessage);
 
-        log.info("TaroService[makeClarifyingQuestion] prompts are loaded");
+        log.info("makeClarifyingQuestion[TaroService] prompts are loaded");
 
         String response = chatGPTClient.callChat(ChatGPTRequest.createRequest(systemMessage, userPrompt))
                 .getChoices().get(0)
                 .getMessage()
                 .getContent();
 
-        log.info("TaroService[makeClarifyingQuestion] chat gpt response received");
+        log.info("makeClarifyingQuestion[TaroService] chat gpt response received");
         return response;
     }
 }
