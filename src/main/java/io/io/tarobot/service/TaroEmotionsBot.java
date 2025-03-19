@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -109,18 +110,45 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                 if (userLastQuery.containsKey(chatId)) {
                     userStates.put(chatId, UserState.IDLE);
 
-                    String category = switch (userSelectedCategory.getOrDefault(chatId, "category_general")) {
-                        case "category_love" -> "Любовь и отношения";
-                        case "category_work" -> "Работа и деньги";
-                        case "category_energy" -> "Энергии дня";
-                        case "category_growth" -> "Личностный рост";
-                        case "category_life" -> "Жизненный путь";
-                        default -> "Общий расклад";
-                    };
+                    // Отправляем стартовое сообщение "мешаем колоду"
+                    SendMessage loadingMessage = new SendMessage();
+                    loadingMessage.setChatId(chatId);
+                    loadingMessage.setText("🔮 Перемешиваем колоду...");
 
-                    String userQuery = category + ": " + userLastQuery.get(chatId);
-                    String tarotResult = taroService.makeTarotPrediction(userQuery);
-                    sendTarotResult(chatId, tarotResult);
+                    try {
+                        Message sentMessage = execute(loadingMessage);
+
+                        // Имитация загрузки
+                        simulateLoading(chatId, sentMessage.getMessageId(), List.of(
+                                "🃏 Взываем к силам Таро...",
+                                "✨ Интерпретируем карты..."
+                        ));
+
+                        // Запрос к GPT
+                        String category = switch (userSelectedCategory.getOrDefault(chatId, "category_general")) {
+                            case "category_love" -> "Любовь и отношения";
+                            case "category_work" -> "Работа и деньги";
+                            case "category_energy" -> "Энергии дня";
+                            case "category_growth" -> "Личностный рост";
+                            case "category_life" -> "Жизненный путь";
+                            default -> "Общий расклад";
+                        };
+
+                        String userQuery = category + ": " + userLastQuery.get(chatId);
+                        String tarotResult = taroService.makeTarotPrediction(userQuery);
+
+                        // Отправляем финальный ответ
+                        EditMessageText finalMessage = new EditMessageText();
+                        finalMessage.setChatId(chatId);
+                        finalMessage.setMessageId(sentMessage.getMessageId());
+                        finalMessage.setText(tarotResult);
+                        execute(finalMessage);
+
+                        // Показываем кнопки с вариантами действий
+                        sendTarotOptions(chatId);
+                    } catch (TelegramApiException e) {
+                        log.error("Ошибка отправки расклада", e);
+                    }
                 } else {
                     sendMessage(chatId, "❗ Пожалуйста, сначала введите свой вопрос.");
                 }
@@ -136,9 +164,37 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
             case "confirm_clarifying" -> {
                 if (userLastQuery.containsKey(chatId)) {
                     userStates.put(chatId, UserState.IDLE);
-                    String clarifyingQuery = userLastQuery.get(chatId);
-                    String tarotResult = taroService.makeClarifyingQuestion(clarifyingQuery);
-                    sendTarotResult(chatId, tarotResult);
+
+                    // Отправляем сообщение "размышляем над вопросом"
+                    SendMessage loadingMessage = new SendMessage();
+                    loadingMessage.setChatId(chatId);
+                    loadingMessage.setText("🧘 Размышляем над твоим вопросом...");
+
+                    try {
+                        Message sentMessage = execute(loadingMessage);
+
+                        // Имитация загрузки
+                        simulateLoading(chatId, sentMessage.getMessageId(), List.of(
+                                "🔍 Ищем глубинные смыслы...",
+                                "📜 Консультируемся с древними текстами..."
+                        ));
+
+                        // Запрос к GPT
+                        String clarifyingQuery = userLastQuery.get(chatId);
+                        String tarotResult = taroService.makeClarifyingQuestion(clarifyingQuery);
+
+                        // Обновляем сообщение с финальным ответом
+                        EditMessageText finalMessage = new EditMessageText();
+                        finalMessage.setChatId(chatId);
+                        finalMessage.setMessageId(sentMessage.getMessageId());
+                        finalMessage.setText(tarotResult);
+                        execute(finalMessage);
+
+                        // Показываем кнопки с вариантами действий
+                        sendTarotOptions(chatId);
+                    } catch (TelegramApiException e) {
+                        log.error("Ошибка отправки уточняющего ответа", e);
+                    }
                 } else {
                     sendMessage(chatId, "❗ Пожалуйста, сначала введите уточняющий вопрос.");
                 }
@@ -236,6 +292,23 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                         List.of(button("❌ Завершить", "end"))
                 ));
     }
+
+    private void simulateLoading(long chatId, int messageId, List<String> loadingMessages) {
+        for (int i = 0; i < loadingMessages.size(); i++) {
+            try {
+                Thread.sleep(1500); // Задержка между обновлениями
+                EditMessageText editMessage = new EditMessageText();
+                editMessage.setChatId(chatId);
+                editMessage.setMessageId(messageId);
+                editMessage.setText(loadingMessages.get(i));
+
+                execute(editMessage);
+            } catch (InterruptedException | TelegramApiException e) {
+                log.warn("Ошибка обновления сообщения с загрузкой", e);
+            }
+        }
+    }
+
 
     private InlineKeyboardButton button(String text, String data) {
         InlineKeyboardButton btn = new InlineKeyboardButton();
