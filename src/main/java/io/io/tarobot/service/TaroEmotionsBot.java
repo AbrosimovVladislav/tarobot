@@ -4,6 +4,7 @@ import io.io.tarobot.domain.UserState;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -23,6 +24,7 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
     private final Map<Long, UserState> userStates = new HashMap<>();
     private final Map<Long, String> userSelectedCategory = new HashMap<>();
     private final Map<Long, String> userLastQuery = new HashMap<>();
+    private final Map<Long, Integer> lastMessageId = new HashMap<>();
 
     public TaroEmotionsBot(String botUsername, String botToken, TaroService taroService) {
         this.botUsername = botUsername;
@@ -147,7 +149,7 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
             }
             case "cancel_tarot" -> {
                 userStates.put(chatId, UserState.IDLE);
-                sendTarotOptions(chatId);
+                sendWelcome(chatId);
             }
             case "end" -> sendWelcome(chatId);
         }
@@ -197,7 +199,33 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
         markup.setKeyboard(buttons);
         message.setReplyMarkup(markup);
 
-        sendMessage(message);
+        try {
+            Message sentMessage = execute(message);
+
+            // Убираем старые кнопки, если было предыдущее сообщение с кнопками
+            if (lastMessageId.containsKey(chatId)) {
+                removeOldButtons(chatId, lastMessageId.get(chatId));
+            }
+
+            // Сохраняем ID последнего отправленного сообщения
+            lastMessageId.put(chatId, sentMessage.getMessageId());
+
+        } catch (TelegramApiException e) {
+            log.error("Ошибка отправки сообщения", e);
+        }
+    }
+
+    private void removeOldButtons(long chatId, int messageId) {
+        EditMessageReplyMarkup editMarkup = new EditMessageReplyMarkup();
+        editMarkup.setChatId(chatId);
+        editMarkup.setMessageId(messageId);
+        editMarkup.setReplyMarkup(null); // Убираем кнопки
+
+        try {
+            execute(editMarkup);
+        } catch (TelegramApiException e) {
+            log.warn("Не удалось убрать старые кнопки: " + e.getMessage());
+        }
     }
 
     private void sendTarotOptions(long chatId) {
