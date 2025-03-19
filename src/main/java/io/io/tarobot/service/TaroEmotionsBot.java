@@ -69,19 +69,17 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                 sendMessageWithButtons(chatId, "🔮 Всё готово! Нажми «Сделать расклад», когда будешь готов.",
                         List.of(
                                 List.of(button("🃏 Сделать расклад", "confirm_tarot")),
-                                List.of(button("❌ Отмена", "start_tarot"))
+                                List.of(button("❌ Отмена", "cancel_tarot"))
                         ));
             }
             case AWAITING_CLARIFICATION -> {
-                if (userLastQuery.containsKey(chatId)) {
-                    String previousQuery = userLastQuery.get(chatId);
-                    String clarifyingQuery = previousQuery + " | Уточнение: " + userInput;
-                    String tarotResult = taroService.makeClarifyingQuestion(clarifyingQuery);
-                    sendTarotResult(chatId, tarotResult);
-                    userStates.put(chatId, UserState.IDLE);
-                } else {
-                    sendMessage(chatId, "❗ Сначала сделай расклад.");
-                }
+                userLastQuery.put(chatId, userInput);
+                userStates.put(chatId, UserState.WAITING_FOR_CLARIFICATION_CONFIRMATION);
+                sendMessageWithButtons(chatId, "📝 Всё готово! Нажми «Сделать уточнение», когда будешь готов.",
+                        List.of(
+                                List.of(button("🔍 Сделать уточнение", "confirm_clarifying")),
+                                List.of(button("❌ Отмена", "cancel_clarifying"))
+                        ));
             }
             default -> sendMessage(chatId, "😕 Я пока не понимаю твой запрос. Используй кнопки.");
         }
@@ -109,7 +107,6 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                 if (userLastQuery.containsKey(chatId)) {
                     userStates.put(chatId, UserState.IDLE);
 
-                    // 🛠 Добавляем учет категории
                     String category = switch (userSelectedCategory.getOrDefault(chatId, "category_general")) {
                         case "category_love" -> "Любовь и отношения";
                         case "category_work" -> "Работа и деньги";
@@ -134,10 +131,29 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
                     sendMessage(chatId, "❗ Сначала сделай расклад.");
                 }
             }
+            case "confirm_clarifying" -> {
+                if (userLastQuery.containsKey(chatId)) {
+                    userStates.put(chatId, UserState.IDLE);
+                    String clarifyingQuery = userLastQuery.get(chatId);
+                    String tarotResult = taroService.makeClarifyingQuestion(clarifyingQuery);
+                    sendTarotResult(chatId, tarotResult);
+                } else {
+                    sendMessage(chatId, "❗ Пожалуйста, сначала введите уточняющий вопрос.");
+                }
+            }
+            case "cancel_clarifying" -> {
+                userStates.put(chatId, UserState.IDLE);
+                sendTarotOptions(chatId);
+            }
+            case "cancel_tarot" -> {
+                userStates.put(chatId, UserState.IDLE);
+                sendTarotOptions(chatId);
+            }
             case "end" -> sendWelcome(chatId);
         }
         log.info("handleCallback[TaroEmotionsBot] finished");
     }
+
 
     private void sendCategories(long chatId) {
         sendMessageWithButtons(chatId, "Какой вопрос тебя волнует?",
@@ -182,6 +198,15 @@ public class TaroEmotionsBot extends TelegramLongPollingBot {
         message.setReplyMarkup(markup);
 
         sendMessage(message);
+    }
+
+    private void sendTarotOptions(long chatId) {
+        sendMessageWithButtons(chatId, "Что ты хочешь сделать дальше?",
+                List.of(
+                        List.of(button("🔄 Сделать ещё один расклад", "again")),
+                        List.of(button("🧘 Задать уточняющий вопрос", "clarifying_question")),
+                        List.of(button("❌ Завершить", "end"))
+                ));
     }
 
     private InlineKeyboardButton button(String text, String data) {
