@@ -14,3 +14,5 @@ telegram:
   bot:
     username: TaroEmotionsBot
     token: 7803345293:AAE6u8MKhARoYH3aV4SfNZnzpKLmL3NvxrA
+    helperUsername: AIJavaHelperBot
+    helperToken: 8018621113:AAHPVIxO_3qM6NdCPcczi2MJAYVCx_O8CIM

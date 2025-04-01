@@ -26,8 +26,8 @@ public class ChatGPTRequest {
      */
     public static ChatGPTRequest createRequest(String systemMessage, String userMessage) {
         return new ChatGPTRequest(
-                "gpt-4o-mini",
-//                "gpt-4o",
+//                "gpt-4o-mini",
+                "gpt-4o",
                 List.of(
                         new ChatGPTRequestMessage("system", systemMessage),
                         new ChatGPTRequestMessage("user", userMessage)

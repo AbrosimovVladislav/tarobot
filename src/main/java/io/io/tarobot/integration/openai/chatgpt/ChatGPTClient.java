@@ -2,6 +2,7 @@ package io.io.tarobot.integration.openai.chatgpt;
 
 import io.io.tarobot.config.OpenAIConfigurationProperties;
 import io.io.tarobot.integration.openai.chatgpt.model.request.ChatGPTRequest;
+import io.io.tarobot.integration.openai.chatgpt.model.request.ChatGPTWebRequest;
 import io.io.tarobot.integration.openai.chatgpt.model.response.ChatGPTResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,15 @@ public class ChatGPTClient {
     private final OpenAIConfigurationProperties openAiConfig;
 
     public ChatGPTResponse callChat(ChatGPTRequest request) {
+        return openAiRestClient.post()
+                .uri(openAiConfig.getChatGpt().getChatUrl())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .body(ChatGPTResponse.class);
+    }
+
+    public ChatGPTResponse callChat(ChatGPTWebRequest request) {
         return openAiRestClient.post()
                 .uri(openAiConfig.getChatGpt().getChatUrl())
                 .contentType(MediaType.APPLICATION_JSON)
